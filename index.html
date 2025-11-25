@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Professional Calorie Calculator</title>
     
+    <!-- Icons -->
+    <link rel="icon" type="image/png" href="12.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="12.png">
+    <link rel="icon" sizes="192x192" href="12.png">
+    
     <!-- Підключаємо сучасний шрифт Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -463,6 +468,69 @@
             transform: translateY(0);
         }
 
+        /* --- New Strategy Selector Styles --- */
+        .strategy-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .strategy-cat-btn {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 2rem; /* Pill shape */
+            background: var(--bg-card);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .strategy-cat-btn.active {
+            background: var(--primary-light);
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        body.dark-theme .strategy-cat-btn.active {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .strategy-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .strategy-opt-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background: var(--bg-input);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .strategy-opt-btn:hover {
+            border-color: var(--success-color);
+        }
+
+        .strategy-opt-btn.active {
+            background: rgba(16, 185, 129, 0.15); /* Green-ish tint */
+            border-color: var(--success-color);
+            color: var(--success-color);
+            font-weight: 700;
+        }
+
         /* --- Results Panel Styling --- */
         .results-container {
             width: 100%;
@@ -775,14 +843,17 @@
 
                 <!-- Meals (Separate container as requested) -->
                 <div class="form-group">
-                    <h3 class="section-subtitle" style="margin-bottom: 0.5rem; font-size: 1.1rem; font-weight: 700;">ГРАФІК 3+2 ПРИЙОМІВ ЇЖІ (%)</h3>
+                    <h3 class="section-subtitle" style="margin-bottom: 0.75rem; font-size: 1.1rem; font-weight: 700;">ГРАФІК 3+2 ПРИЙОМІВ ЇЖІ (%)</h3>
                     
-                    <!-- Strategy Selector -->
-                    <div style="margin-bottom: 1rem;">
-                        <select id="strategySelector" style="width: 100%; padding: 0.85rem 1rem; font-size: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color); background-color: var(--bg-input); color: var(--text-main);">
-                            <option value="" disabled selected>Обрати стратегію харчування...</option>
-                            <!-- Options populated by JS -->
-                        </select>
+                    <!-- NEW STRATEGY SELECTOR (Tabs + Options) -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <!-- Row 1: Categories -->
+                        <div id="strategyCategories" class="strategy-categories"></div>
+                        
+                        <!-- Row 2: Options -->
+                        <div id="strategyOptions" class="strategy-options"></div>
+                        
+                        <!-- Description -->
                         <div id="strategyDescription"></div>
                     </div>
 
@@ -821,33 +892,45 @@
 
     <script>
         // --- 1. Data Structure: Strategies ---
-        const strategies = {
-            "Early Bird (Жайворонки)": [
-                { name: "Потужний старт", desc: "Для тих, хто робить найважчу роботу до 12:00", values: [30, 10, 30, 10, 20] },
-                { name: "Рівномірний ранок", desc: "Баланс енергії до обіду", values: [35, 10, 25, 10, 20] },
-                { name: "Сніданок чемпіона", desc: "Максимум калорій зранку", values: [35, 15, 25, 10, 15] }
-            ],
-            "Office/Day (Офісний ритм)": [
-                { name: "Класичний обід", desc: "Основний прийом їжі в середині дня", values: [25, 10, 35, 10, 20] },
-                { name: "Ситий полудень", desc: "Акцент на обідню перерву", values: [20, 10, 40, 10, 20] },
-                { name: "Денний пік", desc: "Для активності в другій половині дня", values: [15, 15, 35, 15, 20] }
-            ],
-            "Night Owl (Сови)": [
-                { name: "Вечірній комфорт", desc: "Легкий ранок, ситна вечеря", values: [20, 10, 30, 10, 30] },
-                { name: "Пізня енергія", desc: "Для тих, хто працює пізно", values: [15, 10, 30, 10, 35] },
-                { name: "Нічний дожор (контрольований)", desc: "Сніданок символічний, основна енергія ввечері", values: [15, 10, 25, 15, 35] }
-            ],
-            "Grazing (Рівномірне)": [
-                { name: "Ідеальний баланс", desc: "Рівні порції протягом дня", values: [20, 20, 20, 20, 20] },
-                { name: "Дробне харчування", desc: "Постійне підживлення", values: [20, 20, 20, 20, 20] }, // Duplicate values in source, keeping logic
-                { name: "Акцент на сніданок/обід/вечерю", desc: "Основні прийоми рівні, перекуси мінімальні", values: [30, 5, 30, 5, 30] }
-            ]
+        const strategiesData = {
+            "early": {
+                label: "🐣 Жайворонки",
+                options: [
+                    { name: "Потужний старт", desc: "Для тих, хто робить найважчу роботу до 12:00", values: [30, 10, 30, 10, 20] },
+                    { name: "Рівномірний ранок", desc: "Баланс енергії до обіду", values: [35, 10, 25, 10, 20] },
+                    { name: "Сніданок чемпіона", desc: "Максимум калорій зранку", values: [35, 15, 25, 10, 15] }
+                ]
+            },
+            "office": {
+                label: "🏢 Офіс/День",
+                options: [
+                    { name: "Класичний обід", desc: "Основний прийом їжі в середині дня", values: [25, 10, 35, 10, 20] },
+                    { name: "Ситий полудень", desc: "Акцент на обідню перерву", values: [20, 10, 40, 10, 20] },
+                    { name: "Денний пік", desc: "Для активності в другій половині дня", values: [15, 15, 35, 15, 20] }
+                ]
+            },
+            "owl": {
+                label: "🦉 Сови",
+                options: [
+                    { name: "Вечірній комфорт", desc: "Легкий ранок, ситна вечеря", values: [20, 10, 30, 10, 30] },
+                    { name: "Пізня енергія", desc: "Для тих, хто працює пізно", values: [15, 10, 30, 10, 35] },
+                    { name: "Нічний дожор", desc: "Сніданок символічний, основна енергія ввечері", values: [15, 10, 25, 15, 35] }
+                ]
+            },
+            "grazing": {
+                label: "⚖️ Рівномірні",
+                options: [
+                    { name: "Ідеальний баланс", desc: "Рівні порції протягом дня", values: [20, 20, 20, 20, 20] },
+                    { name: "Дробне харчування", desc: "Постійне підживлення", values: [20, 20, 20, 20, 20] },
+                    { name: "3 основні + 2", desc: "Основні прийоми рівні, перекуси мінімальні", values: [30, 5, 30, 5, 30] }
+                ]
+            }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
             loadSavedData();
             loadTheme();
-            initStrategySelector(); // Initialize Selector
+            initTabbedStrategySelector(); // New Init
             
             // Theme toggle
             document.getElementById('themeToggle').addEventListener('change', function() {
@@ -906,47 +989,66 @@
             updateMacroBadge();
         });
 
-        function initStrategySelector() {
-            const selector = document.getElementById('strategySelector');
+        function initTabbedStrategySelector() {
+            const categoriesContainer = document.getElementById('strategyCategories');
+            const optionsContainer = document.getElementById('strategyOptions');
             const description = document.getElementById('strategyDescription');
             
-            // Populate Dropdown
-            for (const [groupName, groupStrategies] of Object.entries(strategies)) {
-                const optgroup = document.createElement('optgroup');
-                optgroup.label = groupName;
-                
-                groupStrategies.forEach((strat, index) => {
-                    const option = document.createElement('option');
-                    // Create a unique key for value to retrieve data later
-                    option.value = `${groupName}|${index}`;
-                    option.textContent = strat.name;
-                    optgroup.appendChild(option);
-                });
-                
-                selector.appendChild(optgroup);
+            let activeCategory = 'early'; // Default
+
+            // 1. Render Category Tabs
+            function renderCategories() {
+                categoriesContainer.innerHTML = '';
+                for (const [key, data] of Object.entries(strategiesData)) {
+                    const btn = document.createElement('div');
+                    btn.className = `strategy-cat-btn ${key === activeCategory ? 'active' : ''}`;
+                    btn.textContent = data.label;
+                    btn.addEventListener('click', () => {
+                        activeCategory = key;
+                        renderCategories(); // Re-render to update active state
+                        renderOptions();    // Show options for new category
+                    });
+                    categoriesContainer.appendChild(btn);
+                }
             }
 
-            // Handle Change
-            selector.addEventListener('change', function() {
-                const [group, index] = this.value.split('|');
-                const strategy = strategies[group][index];
+            // 2. Render Options for Active Category
+            function renderOptions() {
+                optionsContainer.innerHTML = '';
+                const currentOptions = strategiesData[activeCategory].options;
                 
-                if (strategy) {
-                    // 1. Update Inputs
-                    document.getElementById('meal1').value = strategy.values[0];
-                    document.getElementById('meal2').value = strategy.values[1];
-                    document.getElementById('meal3').value = strategy.values[2];
-                    document.getElementById('meal4').value = strategy.values[3];
-                    document.getElementById('meal5').value = strategy.values[4];
-                    
-                    // 2. Update Description
-                    description.textContent = strategy.desc;
-                    
-                    // 3. Update Badge & Save
-                    updatePercentageBadge();
-                    saveData();
-                }
-            });
+                currentOptions.forEach(opt => {
+                    const btn = document.createElement('div');
+                    btn.className = 'strategy-opt-btn';
+                    btn.textContent = opt.name;
+                    btn.addEventListener('click', () => {
+                        // Highlight active option
+                        document.querySelectorAll('.strategy-opt-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        // Apply values
+                        applyStrategy(opt);
+                    });
+                    optionsContainer.appendChild(btn);
+                });
+            }
+
+            function applyStrategy(opt) {
+                document.getElementById('meal1').value = opt.values[0];
+                document.getElementById('meal2').value = opt.values[1];
+                document.getElementById('meal3').value = opt.values[2];
+                document.getElementById('meal4').value = opt.values[3];
+                document.getElementById('meal5').value = opt.values[4];
+                
+                description.textContent = opt.desc;
+                
+                updatePercentageBadge();
+                saveData();
+            }
+
+            // Initial Render
+            renderCategories();
+            renderOptions();
         }
 
         function saveData() {
