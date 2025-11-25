@@ -22,6 +22,7 @@
             --success-color: #10b981;
             --warning-color: #f59e0b;
             --danger-color: #ef4444;
+            --tdee-color: #8b5cf6; /* New Purple Accent */
 
             --bg-body: #f3f4f6;
             --bg-card: #ffffff;
@@ -54,6 +55,7 @@
             --primary-color: hsl(var(--primary-hue), 80%, 65%); /* Lighter blue for dark mode */
             --primary-hover: hsl(var(--primary-hue), 80%, 75%);
             --primary-light: rgba(59, 130, 246, 0.15);
+            --tdee-color: #a78bfa; /* Lighter Purple for dark mode */
             
             --shadow-sm: none;
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
@@ -280,19 +282,19 @@
         }
 
         .activity-option:hover {
-            border-color: var(--primary-color);
+            border-color: var(--tdee-color); /* Changed to Purple */
             background-color: var(--bg-input);
         }
 
         .activity-option.selected {
-            border-color: var(--primary-color);
-            background-color: var(--primary-light);
-            color: var(--primary-color);
+            border-color: var(--tdee-color); /* Changed to Purple */
+            background-color: rgba(139, 92, 246, 0.1); /* Light purple bg */
+            color: var(--tdee-color); /* Changed to Purple */
         }
 
         body.dark-theme .activity-option.selected {
-            background-color: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
+            background-color: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
         }
         
         .activity-option strong { font-size: 1.4rem; display: block; margin-bottom: 0.25rem; } /* HUGE numbers */
@@ -401,8 +403,8 @@
             display: block;
         }
 
-        /* --- BMR Section Styles (New) --- */
-        .bmr-card {
+        /* --- BMR & TDEE Section Styles --- */
+        .bmr-card, .tdee-card {
             background-color: var(--bg-input);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
@@ -416,9 +418,25 @@
             font-size: 1.2rem;
             font-weight: 800;
             color: var(--text-main);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+
+        /* New TDEE Title Style */
+        .tdee-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--tdee-color); /* Purple */
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tdee-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
         }
 
         /* --- Buttons --- */
@@ -660,7 +678,7 @@
                     </div>
                 </div>
 
-                <!-- BMR Calculation Group (New Container) -->
+                <!-- BMR Calculation Group -->
                 <div class="bmr-card">
                     <div class="bmr-title">РОЗРАХУНОК BMR</div>
                     <div class="macro-group">
@@ -679,9 +697,10 @@
                     </div>
                 </div>
 
-                <!-- Activity -->
-                <div class="form-group">
-                    <label>Рівень активності</label>
+                <!-- TDEE Calculation (Activity) Group -->
+                <div class="tdee-card">
+                    <div class="tdee-title">РОЗРАХУНОК TDEE</div>
+                    <div class="tdee-subtitle">Оберіть ваш рівень активності</div>
                     <div id="activity-options" class="activity-grid">
                         <div class="activity-option" data-value="1.2"><strong>1.2</strong><small>Сидячий</small></div>
                         <div class="activity-option" data-value="1.375"><strong>1.375</strong><small>Легка</small></div>
@@ -991,7 +1010,7 @@
                         <h3 style="color:var(--primary-color)">Денна норма</h3>
                         <!-- Neutralized BMR/TDEE colors using var(--text-main) -->
                         <div class="stat-row"><span class="stat-label">Базовий (BMR)</span><span class="stat-val" style="color:var(--text-main)">${bmr.toFixed(0)}</span></div>
-                        <div class="stat-row"><span class="stat-label">Активний (TDEE)</span><span class="stat-val" style="color:var(--text-main)">${tdee.toFixed(0)} ккал</span></div>
+                        <div class="stat-row"><span class="stat-label">Активний (TDEE)</span><span class="stat-val" style="color:var(--tdee-color)">${tdee.toFixed(0)} ккал</span></div>
                         <div style="margin-top:1rem; border-top:1px dashed var(--border-color); padding-top:0.5rem">
                             <div class="stat-row"><span class="stat-label">Білки (${pRatio}%)</span><span class="stat-val" style="color:#3b82f6">${pGrams.toFixed(0)} г</span></div>
                             <div class="stat-row"><span class="stat-label">Жири (${fRatio}%)</span><span class="stat-val" style="color:#f59e0b">${fGrams.toFixed(0)} г</span></div>
@@ -1056,10 +1075,10 @@
             html += `
                         <tr class="row-total">
                             <td>Всього за день</td>
-                            <td>${tdee.toFixed(0)}</td>
-                            <td>${pGrams.toFixed(0)}</td>
-                            <td>${fGrams.toFixed(0)}</td>
-                            <td>${cGrams.toFixed(0)}</td>
+                            <td style="color: var(--tdee-color);">${tdee.toFixed(0)}</td>
+                            <td style="color: #3b82f6;">${pGrams.toFixed(0)}</td>
+                            <td style="color: #f59e0b;">${fGrams.toFixed(0)}</td>
+                            <td style="color: #10b981;">${cGrams.toFixed(0)}</td>
                         </tr>
                     </tbody>
                 </table>
