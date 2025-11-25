@@ -151,7 +151,7 @@
             align-items: center;
         }
 
-        /* --- Sidebar Toggle Button (Desktop) --- */
+        /* --- Sidebar Toggle Button --- */
         .sidebar-toggle {
             display: none;
         }
@@ -191,7 +191,7 @@
             }
         }
 
-        /* --- Mobile Navigation Bar (New) --- */
+        /* --- Mobile Navigation Bar --- */
         .mobile-nav {
             display: none; /* Hidden on Desktop */
             position: fixed;
@@ -245,7 +245,6 @@
                 padding-bottom: 80px; /* Prevent content from being hidden behind nav */
             }
 
-            /* Toggle visibility classes */
             body.tab-inputs .right-panel {
                 display: none !important;
             }
@@ -254,7 +253,6 @@
                 display: none !important;
             }
             
-            /* Show "Mobile Calculate" button only on small screens */
             .mobile-calc-btn-container {
                 display: block !important;
                 margin-top: 2rem;
@@ -784,7 +782,7 @@
         .badge-error { background: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.3); }
 
         /* Strategy description text */
-        #strategyDescription {
+        #strategyDescription, #macroDescription {
             font-size: 0.9rem;
             font-style: italic;
             color: var(--text-muted);
@@ -915,6 +913,16 @@
                     </div>
 
                     <hr class="macro-divider">
+                    
+                    <!-- NEW MACRO SELECTOR (Tabs + Options) -->
+                    <div style="margin-bottom: 1rem;">
+                         <!-- Row 1: Categories -->
+                         <div id="macroCategories" class="strategy-categories"></div>
+                         <!-- Row 2: Options -->
+                         <div id="macroOptions" class="strategy-options"></div>
+                         <!-- Description -->
+                         <div id="macroDescription"></div>
+                    </div>
 
                     <!-- MIDDLE: Input (Decision) -->
                     <div>
@@ -1008,7 +1016,7 @@
                 ]
             },
             "office": {
-                label: "🏢 Офіс", // CHANGED from Офіс/День
+                label: "🏢 Офіс",
                 options: [
                     { name: "Класичний обід", desc: "Основний прийом їжі в середині дня", values: [25, 10, 35, 10, 20] },
                     { name: "Ситий полудень", desc: "Акцент на обідню перерву", values: [20, 10, 40, 10, 20] },
@@ -1033,6 +1041,38 @@
             }
         };
 
+        // --- 2. Data Structure: Macro Strategies ---
+        const macroStrategiesData = {
+            "balance": {
+                label: "⚖️ Баланс",
+                options: [
+                    { name: "ВООЗ Класика", desc: "Ідеальна середина. Нічого зайвого.", values: [15, 30, 55] }, // P, F, C
+                    { name: "Комфортний", desc: "Кращий контроль апетиту.", values: [20, 30, 50] }
+                ]
+            },
+            "sport": {
+                label: "💪 Спорт",
+                options: [
+                    { name: "Атлет", desc: "Максимум білка для м'язів.", values: [30, 25, 45] },
+                    { name: "Фітнес", desc: "Помірний спорт і здоров'я.", values: [25, 30, 45] }
+                ]
+            },
+            "energy": {
+                label: "🔋 Енергія",
+                options: [
+                    { name: "Марафонець", desc: "Максимум палива для витривалості.", values: [10, 25, 65] },
+                    { name: "Активний день", desc: "Для рухливої роботи.", values: [15, 25, 60] }
+                ]
+            },
+            "satiety": {
+                label: "🥑 Ситість",
+                options: [
+                    { name: "Ситий вечір", desc: "Довге відчуття ситості.", values: [20, 35, 45] },
+                    { name: "Смачний", desc: "Баланс зі зміщенням у жири.", values: [15, 35, 50] }
+                ]
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize theme toggle based on current body class
             const themeToggle = document.getElementById('themeToggle');
@@ -1045,7 +1085,8 @@
             }
 
             loadSavedData();
-            initTabbedStrategySelector(); // New Init
+            initTabbedStrategySelector(); // Meal Strategy
+            initTabbedMacroSelector();    // Macro Strategy
             
             // Theme toggle listener
             themeToggle.addEventListener('change', function() {
@@ -1170,7 +1211,7 @@
                     btn.textContent = opt.name;
                     btn.addEventListener('click', () => {
                         // Highlight active option
-                        document.querySelectorAll('.strategy-opt-btn').forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('#strategyOptions .strategy-opt-btn').forEach(b => b.classList.remove('active'));
                         btn.classList.add('active');
                         
                         // Apply values
@@ -1197,6 +1238,63 @@
             renderCategories();
             renderOptions();
         }
+
+        // --- New Init Function for Macro Selector ---
+        function initTabbedMacroSelector() {
+            const categoriesContainer = document.getElementById('macroCategories');
+            const optionsContainer = document.getElementById('macroOptions');
+            const description = document.getElementById('macroDescription');
+            
+            let activeCategory = 'balance'; // Default
+
+            function renderCategories() {
+                categoriesContainer.innerHTML = '';
+                for (const [key, data] of Object.entries(macroStrategiesData)) {
+                    const btn = document.createElement('div');
+                    btn.className = `strategy-cat-btn ${key === activeCategory ? 'active' : ''}`;
+                    btn.textContent = data.label;
+                    btn.addEventListener('click', () => {
+                        activeCategory = key;
+                        renderCategories();
+                        renderOptions();
+                    });
+                    categoriesContainer.appendChild(btn);
+                }
+            }
+
+            function renderOptions() {
+                optionsContainer.innerHTML = '';
+                const currentOptions = macroStrategiesData[activeCategory].options;
+                
+                currentOptions.forEach(opt => {
+                    const btn = document.createElement('div');
+                    btn.className = 'strategy-opt-btn';
+                    btn.textContent = opt.name;
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('#macroOptions .strategy-opt-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        applyMacroStrategy(opt);
+                    });
+                    optionsContainer.appendChild(btn);
+                });
+            }
+
+            function applyMacroStrategy(opt) {
+                // Order in opt.values is [Protein, Fat, Carbs]
+                document.getElementById('proteinRatio').value = opt.values[0];
+                document.getElementById('fatRatio').value = opt.values[1];
+                document.getElementById('carbRatio').value = opt.values[2];
+                
+                description.textContent = opt.desc;
+                
+                updateMacroBadge();
+                saveData();
+            }
+
+            renderCategories();
+            renderOptions();
+        }
+
 
         function saveData() {
             const selectedActivity = document.querySelector('.activity-option.selected');
