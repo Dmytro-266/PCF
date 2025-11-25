@@ -720,6 +720,19 @@
     </style>
 </head>
 <body>
+    
+    <!-- Immediate Theme Init (Prevents FOUC) -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            // Default to 'dark' if no theme is saved, or if 'dark' is saved
+            if (!savedTheme || savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+            }
+        })();
+    </script>
 
     <div class="theme-toggle-wrapper">
         <span style="font-size: 1.5rem;">☀️</span>
@@ -902,7 +915,7 @@
                 ]
             },
             "office": {
-                label: "🏢 Офіс/День",
+                label: "🏢 Офіс", // CHANGED from Офіс/День
                 options: [
                     { name: "Класичний обід", desc: "Основний прийом їжі в середині дня", values: [25, 10, 35, 10, 20] },
                     { name: "Ситий полудень", desc: "Акцент на обідню перерву", values: [20, 10, 40, 10, 20] },
@@ -928,14 +941,23 @@
         };
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize theme toggle based on current body class
+            const themeToggle = document.getElementById('themeToggle');
+            const isDark = document.body.classList.contains('dark-theme');
+            themeToggle.checked = isDark;
+
             loadSavedData();
-            loadTheme();
             initTabbedStrategySelector(); // New Init
             
-            // Theme toggle
-            document.getElementById('themeToggle').addEventListener('change', function() {
-                document.body.classList.toggle('dark-theme', this.checked);
-                localStorage.setItem('theme', this.checked ? 'dark' : 'light');
+            // Theme toggle listener
+            themeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    document.body.classList.add('dark-theme');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark-theme');
+                    localStorage.setItem('theme', 'light');
+                }
             });
             
             // Sidebar Toggle Logic
@@ -986,7 +1008,7 @@
             });
 
             updatePercentageBadge();
-            updateMacroBadge();
+            updateMacroBadge(); // Init macro badge on load
         });
 
         function initTabbedStrategySelector() {
@@ -1104,14 +1126,7 @@
             }
         }
 
-        function loadTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            const toggle = document.getElementById('themeToggle');
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-theme');
-                toggle.checked = true;
-            }
-        }
+        // loadTheme function removed as we handle it inline and in DOMContentLoaded now
 
         function updatePercentageBadge() {
             let total = 0;
