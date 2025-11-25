@@ -32,6 +32,7 @@
             --bg-body: #f3f4f6;
             --bg-card: #ffffff;
             --bg-input: #f9fafb;
+            --bg-nav: #ffffff; /* Mobile nav bg */
             
             --text-main: #111827;
             --text-muted: #6b7280;
@@ -51,6 +52,7 @@
             --bg-body: #111827; /* Deep charcoal */
             --bg-card: #1f2937; /* Lighter charcoal */
             --bg-input: #374151;
+            --bg-nav: #1f2937;
             
             --text-main: #f9fafb;
             --text-muted: #d1d5db;
@@ -149,7 +151,7 @@
             align-items: center;
         }
 
-        /* --- Sidebar Toggle Button --- */
+        /* --- Sidebar Toggle Button (Desktop) --- */
         .sidebar-toggle {
             display: none;
         }
@@ -187,6 +189,80 @@
                 left: 0;
                 transform: translate(12px, -50%);
             }
+        }
+
+        /* --- Mobile Navigation Bar (New) --- */
+        .mobile-nav {
+            display: none; /* Hidden on Desktop */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--bg-nav);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+            padding: 0.5rem;
+            justify-content: space-around;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .mobile-nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 0.5rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .mobile-nav-btn .icon {
+            font-size: 1.5rem;
+        }
+
+        .mobile-nav-btn.active {
+            color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+        
+        body.dark-theme .mobile-nav-btn.active {
+            background-color: rgba(59, 130, 246, 0.2);
+        }
+
+        /* Mobile Specific Layout Adjustments */
+        @media (max-width: 768px) {
+            .mobile-nav {
+                display: flex;
+            }
+
+            .main-wrapper {
+                padding-bottom: 80px; /* Prevent content from being hidden behind nav */
+            }
+
+            /* Toggle visibility classes */
+            body.tab-inputs .right-panel {
+                display: none !important;
+            }
+            
+            body.tab-results .left-panel {
+                display: none !important;
+            }
+            
+            /* Show "Mobile Calculate" button only on small screens */
+            .mobile-calc-btn-container {
+                display: block !important;
+                margin-top: 2rem;
+            }
+        }
+
+        .mobile-calc-btn-container {
+            display: none; /* Hidden by default */
         }
 
         /* --- Forms & Inputs --- */
@@ -743,7 +819,19 @@
         <span style="font-size: 1.5rem;">🌙</span>
     </div>
 
-    <!-- Кнопка для згортання панелі -->
+    <!-- Mobile Navigation (Visible only on small screens) -->
+    <nav class="mobile-nav">
+        <button class="mobile-nav-btn active" data-target="inputs" onclick="showMobileTab('inputs')">
+            <span class="icon">⚙️</span>
+            <span>Налаштування</span>
+        </button>
+        <button class="mobile-nav-btn" data-target="results" onclick="showMobileTab('results')">
+            <span class="icon">📊</span>
+            <span>Мій Раціон</span>
+        </button>
+    </nav>
+
+    <!-- Desktop Toggle (Visible only on large screens) -->
     <button id="sidebarToggle" class="sidebar-toggle" title="Згорнути/Розгорнути панель">
         ◀
     </button>
@@ -882,6 +970,11 @@
                         <span id="percentageBadge" class="percentage-badge badge-success">Всього: 100%</span>
                     </div>
                 </div>
+
+                <!-- Extra Calculate Button for Mobile convenience -->
+                <div class="mobile-calc-btn-container">
+                    <button onclick="calculateAndSwitch()" class="btn-primary">Розрахувати і Переглянути</button>
+                </div>
             </div>
         </div>
 
@@ -945,6 +1038,11 @@
             const themeToggle = document.getElementById('themeToggle');
             const isDark = document.body.classList.contains('dark-theme');
             themeToggle.checked = isDark;
+
+            // Mobile Tab Init
+            if (window.innerWidth <= 768) {
+                document.body.classList.add('tab-inputs');
+            }
 
             loadSavedData();
             initTabbedStrategySelector(); // New Init
@@ -1010,6 +1108,33 @@
             updatePercentageBadge();
             updateMacroBadge(); // Init macro badge on load
         });
+
+        // Mobile Tab Functionality
+        function showMobileTab(tabName) {
+            const body = document.body;
+            const btns = document.querySelectorAll('.mobile-nav-btn');
+            
+            if (tabName === 'inputs') {
+                body.classList.remove('tab-results');
+                body.classList.add('tab-inputs');
+            } else {
+                body.classList.remove('tab-inputs');
+                body.classList.add('tab-results');
+            }
+            
+            btns.forEach(btn => {
+                if (btn.dataset.target === tabName) btn.classList.add('active');
+                else btn.classList.remove('active');
+            });
+        }
+
+        // Helper to calculate and switch tabs on mobile
+        function calculateAndSwitch() {
+            calculate();
+            if (window.innerWidth <= 768) {
+                showMobileTab('results');
+            }
+        }
 
         function initTabbedStrategySelector() {
             const categoriesContainer = document.getElementById('strategyCategories');
