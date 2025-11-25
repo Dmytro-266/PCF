@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Calorie Calculator</title>
+    
+    <!-- Підключаємо сучасний шрифт Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CSS Variables & Theme Setup --- */
+        :root {
+            /* Light Theme Defaults */
+            --primary-hue: 220;
+            --primary-color: hsl(var(--primary-hue), 90%, 56%); /* #3b82f6 */
+            --primary-hover: hsl(var(--primary-hue), 90%, 45%);
+            --primary-light: hsl(var(--primary-hue), 90%, 95%);
+            
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --bg-input: #f9fafb;
+            
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --text-light: #9ca3af;
+            
+            --border-color: #e5e7eb;
+            --border-focus: var(--primary-color);
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+        }
+
+        body.dark-theme {
+            /* Dark Theme Overrides */
+            --bg-body: #111827; /* Deep charcoal */
+            --bg-card: #1f2937; /* Lighter charcoal */
+            --bg-input: #374151;
+            
+            --text-main: #f9fafb;
+            --text-muted: #d1d5db;
+            --text-light: #9ca3af;
+            
+            --border-color: #374151;
+            --primary-color: hsl(var(--primary-hue), 80%, 65%); /* Lighter blue for dark mode */
+            --primary-hover: hsl(var(--primary-hue), 80%, 75%);
+            --primary-light: rgba(59, 130, 246, 0.15);
+            
+            --shadow-sm: none;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+        }
+
+        /* --- Global Reset & Typography --- */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+            /* GLOBAL FONT SIZE BOOST (1.25x larger base) */
+            font-size: 18px; 
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+            color: var(--text-main);
+        }
+
+        /* Hierarchy Boosted */
+        h1 { font-size: 2rem; font-weight: 800; margin-bottom: 1.5rem; }
+        h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; }
+        h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem; }
+
+        small { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* --- Layout --- */
+        .main-wrapper {
+            display: grid;
+            grid-template-columns: 1fr;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        @media (min-width: 1024px) {
+            .main-wrapper {
+                grid-template-columns: 50% 1fr;
+                transition: grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            .main-wrapper.collapsed {
+                grid-template-columns: 0px 1fr;
+            }
+        }
+
+        .panel {
+            padding: 2rem;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .left-panel {
+            background-color: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: var(--shadow-md);
+            z-index: 10;
+            padding-top: 5rem;
+            min-width: 0;
+            white-space: nowrap; 
+            transition: padding 0.4s ease, opacity 0.3s ease;
+        }
+        
+        .main-wrapper.collapsed .left-panel {
+            padding-left: 0;
+            padding-right: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+
+        .right-panel {
+            background-color: var(--bg-body);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Sidebar Toggle Button --- */
+        .sidebar-toggle {
+            display: none;
+        }
+
+        @media (min-width: 1024px) {
+            .sidebar-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: fixed;
+                left: 50%; 
+                top: 50%;
+                transform: translate(-50%, -50%);
+                width: 40px; /* Larger button */
+                height: 40px;
+                background: var(--bg-card);
+                border: 1px solid var(--border-color);
+                border-radius: 50%;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+                cursor: pointer;
+                z-index: 100;
+                transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s ease, background-color 0.3s;
+                color: var(--text-muted);
+                font-size: 18px; /* Larger icon */
+                user-select: none;
+            }
+
+            .sidebar-toggle:hover {
+                color: var(--primary-color);
+                border-color: var(--primary-color);
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+
+            .sidebar-toggle.collapsed {
+                left: 0;
+                transform: translate(12px, -50%);
+            }
+        }
+
+        /* --- Forms & Inputs --- */
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem; /* More spacing */
+            white-space: normal;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 1.1rem; /* Larger labels */
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 0.85rem 1rem; /* Larger padding */
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            font-size: 1.2rem; /* Larger input text */
+            font-weight: 500;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        input[type="number"]:focus, select:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        /* --- Custom Controls --- */
+        /* Gender Toggle */
+        .gender-group {
+            display: flex;
+            background-color: var(--bg-input);
+            padding: 6px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+        .gender-btn {
+            flex: 1;
+            padding: 0.85rem; /* Larger padding */
+            text-align: center;
+            border-radius: calc(var(--radius-md) - 2px);
+            cursor: pointer;
+            font-size: 1.1rem; /* Larger text */
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .gender-btn input { display: none; }
+
+        .gender-btn:hover { color: var(--text-main); }
+
+        .gender-btn.active {
+            background-color: var(--bg-card);
+            color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
+            font-weight: 700;
+        }
+        
+        body.dark-theme .gender-btn.active {
+            background-color: #4b5563;
+            color: white;
+        }
+
+        /* Activity Grid */
+        .activity-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+
+        .activity-option {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem; /* Larger padding */
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .activity-option:hover {
+            border-color: var(--primary-color);
+            background-color: var(--bg-input);
+        }
+
+        .activity-option.selected {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        body.dark-theme .activity-option.selected {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+        
+        .activity-option strong { font-size: 1.4rem; display: block; margin-bottom: 0.25rem; } /* HUGE numbers */
+        .activity-option small { line-height: 1.2; font-size: 0.9rem; }
+
+        /* --- Strategy Card Styles --- */
+        .strategy-card {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Hierarchy Step 1: Top Level Title (Implicit H1 for this section) */
+        .section-subtitle {
+            font-size: 1.1rem; /* Larger subtitle */
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1.25rem;
+        }
+        
+        .action-title {
+            color: var(--primary-color);
+            font-size: 1.2rem; /* Slightly larger for "My Choice" */
+        }
+
+        .macro-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem; /* More spacing between columns */
+            text-align: center;
+        }
+
+        /* Reference Items */
+        .ref-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.75rem; /* Larger padding */
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            border: 1px dashed var(--border-color);
+        }
+
+        .ref-val {
+            font-size: 1.5rem; /* HUGE Reference Values */
+            font-weight: 800;
+            margin-bottom: 0.25rem;
+        }
+        .val-carbs { color: #10b981; }   
+        .val-protein { color: #3b82f6; } 
+        .val-fat { color: #f59e0b; }     
+
+        .ref-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Inputs */
+        .input-col {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-label {
+            font-size: 1rem; /* Larger Labels for Inputs */
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+            font-weight: 700; /* Bold for visibility */
+        }
+
+        /* Specific colors for input labels as requested */
+        .label-carbs { color: #10b981 !important; }
+        .label-protein { color: #3b82f6 !important; }
+        .label-fat { color: #f59e0b !important; }
+
+        .macro-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 0.5rem 0;
+            border: none;
+        }
+
+        /* Meal Distribution */
+        .meal-distribution-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.75rem;
+        }
+        
+        /* Make small meal inputs readable */
+        .meal-distribution-grid input {
+            padding: 0.5rem;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+        .meal-distribution-grid label {
+            font-size: 0.9rem;
+            text-align: center;
+            display: block;
+        }
+
+        /* --- BMR Section Styles (New) --- */
+        .bmr-card {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .bmr-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Buttons --- */
+        .btn-primary {
+            width: 100%;
+            padding: 1.25rem; /* Larger button area */
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            font-size: 1.2rem; /* Larger button text */
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(var(--primary-hue), 0.4);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* --- Results Panel Styling --- */
+        .results-container {
+            width: 100%;
+            max-width: 900px; /* Wider to accommodate larger text */
+        }
+        
+        /* Stats Cards in Result */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        @media (min-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .stat-box {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
+        
+        .stat-box.weekly {
+            border-left: 6px solid var(--warning-color); /* Thicker border */
+        }
+        
+        .stat-box h3 {
+            font-size: 1.4rem; /* Larger headers in results */
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .stat-row:last-child { margin-bottom: 0; padding-bottom: 0; border: none; }
+        
+        .stat-label { color: var(--text-muted); font-size: 1.1rem; }
+        
+        /* Value styles */
+        .stat-val { 
+            font-weight: 800; 
+            font-size: 1.3rem; /* Larger numbers */
+            color: var(--primary-color); 
+        }
+
+        /* Results Table */
+        .results-table-wrapper {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            margin-top: 1.5rem;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.1rem; /* Larger table text */
+        }
+
+        .results-table th {
+            background-color: var(--bg-input);
+            text-align: right;
+            padding: 1.25rem; /* More padding */
+            font-weight: 700;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .results-table th:first-child { text-align: left; }
+
+        .results-table td {
+            padding: 1.25rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        .results-table td:first-child { text-align: left; font-weight: 600; }
+        
+        .results-table tr:last-child td { border-bottom: none; }
+
+        /* Table highlight rows */
+        .row-summary {
+            background-color: rgba(16, 185, 129, 0.1); 
+        }
+        .row-summary td {
+            color: var(--success-color) !important;
+            font-weight: 700;
+        }
+        
+        .row-total {
+            background-color: var(--bg-input);
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle-wrapper {
+            position: fixed;
+            top: 1.5rem;
+            left: 1.5rem;
+            background: var(--bg-card);
+            padding: 0.5rem;
+            border-radius: 2rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .theme-switch {
+            position: relative;
+            width: 50px; /* Larger switch */
+            height: 28px;
+            display: inline-block;
+        }
+        
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #d1d5db;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px; width: 20px;
+            left: 4px; bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 60vh;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        .empty-state-icon { font-size: 5rem; margin-bottom: 1rem; opacity: 0.3; }
+        .empty-state h2 { font-size: 2rem; }
+
+        /* Percentage Badge */
+        .percentage-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success-color); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning-color); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-error { background: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    </style>
+</head>
+<body>
+
+    <div class="theme-toggle-wrapper">
+        <span style="font-size: 1.5rem;">☀️</span>
+        <label class="theme-switch">
+            <input type="checkbox" id="themeToggle">
+            <span class="slider"></span>
+        </label>
+        <span style="font-size: 1.5rem;">🌙</span>
+    </div>
+
+    <!-- Кнопка для згортання панелі -->
+    <button id="sidebarToggle" class="sidebar-toggle" title="Згорнути/Розгорнути панель">
+        ◀
+    </button>
+
+    <div class="main-wrapper">
+        <!-- LEFT PANEL -->
+        <div class="panel left-panel">
+            <h1>📊 Калькулятор КБЖВ</h1>
+            
+            <div class="form-section">
+                <!-- Gender -->
+                <div class="form-group">
+                    <label>Стать</label>
+                    <div class="gender-group">
+                        <label class="gender-btn active" for="male">
+                            <input type="radio" id="male" name="gender" value="male" checked>
+                            Чоловік
+                        </label>
+                        <label class="gender-btn" for="female">
+                            <input type="radio" id="female" name="gender" value="female">
+                            Жінка
+                        </label>
+                    </div>
+                </div>
+
+                <!-- BMR Calculation Group (New Container) -->
+                <div class="bmr-card">
+                    <div class="bmr-title">РОЗРАХУНОК BMR</div>
+                    <div class="macro-group">
+                        <div class="form-group">
+                            <label for="age">Вік</label>
+                            <input type="number" id="age" value="23" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="weight">Вага (кг)</label>
+                            <input type="number" id="weight" value="71" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="height">Зріст (см)</label>
+                            <input type="number" id="height" value="176" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity -->
+                <div class="form-group">
+                    <label>Рівень активності</label>
+                    <div id="activity-options" class="activity-grid">
+                        <div class="activity-option" data-value="1.2"><strong>1.2</strong><small>Сидячий</small></div>
+                        <div class="activity-option" data-value="1.375"><strong>1.375</strong><small>Легка</small></div>
+                        <div class="activity-option selected" data-value="1.55"><strong>1.55</strong><small>Середня</small></div>
+                        <div class="activity-option" data-value="1.725"><strong>1.725</strong><small>Висока</small></div>
+                        <div class="activity-option" data-value="1.9"><strong>1.9</strong><small>Екстра</small></div>
+                    </div>
+                </div>
+                
+                <!-- UNIFIED MACRO STRATEGY CARD -->
+                <div class="strategy-card">
+                    
+                    <!-- TOP: Reference (Guide) -->
+                    <div>
+                        <div class="section-subtitle" style="font-size: 1.2rem; font-weight: 800;">РЕКОМЕНДОВАНИЙ КОРИДОР ВООЗ</div>
+                        <div class="macro-grid">
+                            <!-- Protein (Blue) -->
+                            <div class="ref-item">
+                                <div class="ref-val val-protein">10-30%</div>
+                                <div class="ref-label">Білки</div>
+                            </div>
+                            <!-- Fat (Orange) -->
+                            <div class="ref-item">
+                                <div class="ref-val val-fat">25-35%</div>
+                                <div class="ref-label">Жири</div>
+                            </div>
+                            <!-- Carbs (Green) -->
+                            <div class="ref-item">
+                                <div class="ref-val val-carbs">45-65%</div>
+                                <div class="ref-label">Вуглеводи</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="macro-divider">
+
+                    <!-- MIDDLE: Input (Decision) -->
+                    <div>
+                        <div class="section-subtitle action-title" style="font-size: 1.1rem; font-weight: 700;">ВИБІР (%) У МЕЖАХ НОРМ</div>
+                        <div class="macro-grid">
+                            <!-- Inputs aligned with above cols. Colors applied to labels. -->
+                            <div class="input-col">
+                                <label class="input-label label-protein">Білки %</label>
+                                <input type="number" id="proteinRatio" value="30">
+                            </div>
+                            <div class="input-col">
+                                <label class="input-label label-fat">Жири %</label>
+                                <input type="number" id="fatRatio" value="30">
+                            </div>
+                            <div class="input-col">
+                                <label class="input-label label-carbs">Вуглеводи %</label>
+                                <input type="number" id="carbRatio" value="40">
+                            </div>
+                        </div>
+                        
+                        <!-- New Macro Badge Here -->
+                        <div style="text-align:center; margin-top:1.5rem;">
+                            <span id="macroBadge" class="percentage-badge badge-success">Всього: 100%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meals (Separate container as requested) -->
+                <div class="form-group">
+                    <h3 class="section-subtitle" style="margin-bottom: 0.75rem; font-size: 1.1rem; font-weight: 700;">ГРАФІК 3+2 ПРИЙОМІВ ЇЖІ (%)</h3>
+                    <div class="meal-distribution-grid">
+                        <div><label style="font-size:0.9rem">П1</label><input type="number" id="meal1" value="20"></div>
+                        <div><label style="font-size:0.9rem">П2</label><input type="number" id="meal2" value="20"></div>
+                        <div><label style="font-size:0.9rem">П3</label><input type="number" id="meal3" value="20"></div>
+                        <div><label style="font-size:0.9rem">П4</label><input type="number" id="meal4" value="20"></div>
+                        <div><label style="font-size:0.9rem">П5</label><input type="number" id="meal5" value="20"></div>
+                    </div>
+                    
+                    <div style="text-align:center; margin-top:1rem;">
+                        <span id="percentageBadge" class="percentage-badge badge-success">Всього: 100%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="panel right-panel">
+            <div class="results-container">
+                <button onclick="calculate()" class="btn-primary">Розрахувати раціон</button>
+                
+                <div id="emptyState" class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <h2>Ваш план харчування</h2>
+                    <p>Заповніть параметри зліва та натисніть кнопку розрахунку</p>
+                </div>
+
+                <div id="results" style="display: none; margin-top: 2rem;">
+                    <!-- Results injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSavedData();
+            loadTheme();
+            
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('change', function() {
+                document.body.classList.toggle('dark-theme', this.checked);
+                localStorage.setItem('theme', this.checked ? 'dark' : 'light');
+            });
+            
+            // Sidebar Toggle Logic
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const mainWrapper = document.querySelector('.main-wrapper');
+            
+            sidebarToggle.addEventListener('click', () => {
+                mainWrapper.classList.toggle('collapsed');
+                sidebarToggle.classList.toggle('collapsed');
+                
+                // Change arrow direction
+                if (mainWrapper.classList.contains('collapsed')) {
+                    sidebarToggle.textContent = '▶'; // Right arrow to open
+                } else {
+                    sidebarToggle.textContent = '◀'; // Left arrow to close
+                }
+            });
+            
+            // Gender toggle logic
+            document.querySelectorAll('.gender-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    this.querySelector('input').checked = true;
+                    saveData();
+                });
+            });
+            
+            // Activity selector logic
+            const activityContainer = document.getElementById('activity-options');
+            activityContainer.addEventListener('click', (event) => {
+                const option = event.target.closest('.activity-option');
+                if (!option) return;
+                activityContainer.querySelectorAll('.activity-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                saveData();
+            });
+
+            // Inputs event listeners
+            const inputs = ['age', 'weight', 'height', 'proteinRatio', 'fatRatio', 'carbRatio', 
+                           'meal1', 'meal2', 'meal3', 'meal4', 'meal5'];
+            inputs.forEach(id => {
+                document.getElementById(id).addEventListener('input', () => {
+                    saveData();
+                    if (id.startsWith('meal')) updatePercentageBadge();
+                    // NEW: Update macro badge
+                    if (['proteinRatio', 'fatRatio', 'carbRatio'].includes(id)) updateMacroBadge();
+                });
+            });
+
+            updatePercentageBadge();
+            updateMacroBadge(); // Init macro badge on load
+        });
+
+        function saveData() {
+            const selectedActivity = document.querySelector('.activity-option.selected');
+            const data = {
+                gender: document.querySelector('input[name="gender"]:checked').value,
+                age: document.getElementById('age').value,
+                weight: document.getElementById('weight').value,
+                height: document.getElementById('height').value,
+                activity: selectedActivity ? selectedActivity.dataset.value : '1.55',
+                proteinRatio: document.getElementById('proteinRatio').value,
+                fatRatio: document.getElementById('fatRatio').value,
+                carbRatio: document.getElementById('carbRatio').value,
+                meal1: document.getElementById('meal1').value,
+                meal2: document.getElementById('meal2').value,
+                meal3: document.getElementById('meal3').value,
+                meal4: document.getElementById('meal4').value,
+                meal5: document.getElementById('meal5').value
+            };
+            localStorage.setItem('kbzhuData', JSON.stringify(data));
+        }
+
+        function loadSavedData() {
+            const savedData = localStorage.getItem('kbzhuData');
+            if (!savedData) return;
+            
+            const data = JSON.parse(savedData);
+            if (data.gender) {
+                document.querySelectorAll('.gender-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.querySelector('input').id === data.gender) {
+                        btn.classList.add('active');
+                        btn.querySelector('input').checked = true;
+                    }
+                });
+            }
+            if (data.age) document.getElementById('age').value = data.age;
+            if (data.weight) document.getElementById('weight').value = data.weight;
+            if (data.height) document.getElementById('height').value = data.height;
+            if (data.proteinRatio) document.getElementById('proteinRatio').value = data.proteinRatio;
+            if (data.fatRatio) document.getElementById('fatRatio').value = data.fatRatio;
+            if (data.carbRatio) document.getElementById('carbRatio').value = data.carbRatio;
+            
+            ['meal1','meal2','meal3','meal4','meal5'].forEach(m => {
+                if (data[m]) document.getElementById(m).value = data[m];
+            });
+            
+            if (data.activity) {
+                document.querySelectorAll('.activity-option').forEach(o => {
+                    o.classList.remove('selected');
+                    if (o.dataset.value === data.activity) o.classList.add('selected');
+                });
+            }
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const toggle = document.getElementById('themeToggle');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                toggle.checked = true;
+            }
+        }
+
+        function updatePercentageBadge() {
+            let total = 0;
+            for(let i=1; i<=5; i++) {
+                total += parseFloat(document.getElementById('meal'+i).value) || 0;
+            }
+            
+            const badge = document.getElementById('percentageBadge');
+            badge.textContent = `Всього: ${total}%`;
+            
+            badge.className = 'percentage-badge'; // reset
+            if (total === 100) badge.classList.add('badge-success');
+            else if (total > 100) badge.classList.add('badge-error');
+            else badge.classList.add('badge-warning');
+        }
+
+        // NEW: Function to update Macro Badge
+        function updateMacroBadge() {
+            const p = parseFloat(document.getElementById('proteinRatio').value) || 0;
+            const f = parseFloat(document.getElementById('fatRatio').value) || 0;
+            const c = parseFloat(document.getElementById('carbRatio').value) || 0;
+            
+            const total = p + f + c;
+            const badge = document.getElementById('macroBadge');
+            
+            badge.textContent = `Всього: ${total}%`;
+            
+            badge.className = 'percentage-badge'; // reset
+            if (total === 100) {
+                badge.classList.add('badge-success');
+            } else {
+                badge.classList.add('badge-error'); // Red for error
+            }
+        }
+
+        function calculate() {
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+            const age = parseFloat(document.getElementById('age').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value);
+            
+            const selectedAct = document.querySelector('.activity-option.selected');
+            if (!selectedAct) { alert("Оберіть рівень активності"); return; }
+            const activity = parseFloat(selectedAct.dataset.value);
+            
+            const pRatio = parseFloat(document.getElementById('proteinRatio').value);
+            const fRatio = parseFloat(document.getElementById('fatRatio').value);
+            const cRatio = parseFloat(document.getElementById('carbRatio').value);
+
+            if (Math.round(pRatio + fRatio + cRatio) !== 100) {
+                alert(`Сума БЖВ (${pRatio + fRatio + cRatio}%) має бути 100%`);
+                return;
+            }
+
+            // Calculation
+            let bmr = (gender === 'male') 
+                ? 10 * weight + 6.25 * height - 5 * age + 5
+                : 10 * weight + 6.25 * height - 5 * age - 161;
+            
+            const tdee = bmr * activity;
+            const bmrWeekly = bmr * 7;
+            const tdeeWeekly = tdee * 7;
+
+            const pGrams = (tdee * pRatio / 100) / 4;
+            const fGrams = (tdee * fRatio / 100) / 9;
+            const cGrams = (tdee * cRatio / 100) / 4;
+
+            const meals = [1,2,3,4,5].map(i => {
+                const percent = parseFloat(document.getElementById('meal'+i).value) || 0;
+                const ratio = percent / 100;
+                return {
+                    id: i,
+                    percent: percent,
+                    kcal: tdee * ratio,
+                    p: pGrams * ratio,
+                    f: fGrams * ratio,
+                    c: cGrams * ratio
+                };
+            });
+
+            // Generate HTML with Classes instead of inline styles for Theme Support
+            let html = `
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <h3 style="color:var(--primary-color)">Денна норма</h3>
+                        <!-- Neutralized BMR/TDEE colors using var(--text-main) -->
+                        <div class="stat-row"><span class="stat-label">Базовий (BMR)</span><span class="stat-val" style="color:var(--text-main)">${bmr.toFixed(0)}</span></div>
+                        <div class="stat-row"><span class="stat-label">Активний (TDEE)</span><span class="stat-val" style="color:var(--text-main)">${tdee.toFixed(0)} ккал</span></div>
+                        <div style="margin-top:1rem; border-top:1px dashed var(--border-color); padding-top:0.5rem">
+                            <div class="stat-row"><span class="stat-label">Білки (${pRatio}%)</span><span class="stat-val" style="color:#3b82f6">${pGrams.toFixed(0)} г</span></div>
+                            <div class="stat-row"><span class="stat-label">Жири (${fRatio}%)</span><span class="stat-val" style="color:#f59e0b">${fGrams.toFixed(0)} г</span></div>
+                            <div class="stat-row"><span class="stat-label">Вугл. (${cRatio}%)</span><span class="stat-val" style="color:#10b981">${cGrams.toFixed(0)} г</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-box weekly">
+                        <h3 style="color:var(--warning-color)">Тижнева норма (x7)</h3>
+                        <!-- Neutralized weekly stats -->
+                        <div class="stat-row"><span class="stat-label">Базовий тиждень</span><span class="stat-val" style="color:var(--text-main)">${bmrWeekly.toLocaleString('uk-UA')}</span></div>
+                        <div class="stat-row"><span class="stat-label">Активний тиждень</span><span class="stat-val" style="color:var(--text-main)">${tdeeWeekly.toLocaleString('uk-UA')} ккал</span></div>
+                        <div style="margin-top:1rem; padding: 0.5rem; background:var(--bg-input); border-radius:var(--radius-md); font-size:0.9rem; color:var(--text-muted)">
+                            Це ваш сумарний бюджет калорій на 7 днів. Ви можете варіювати калорійність по днях, головне вкластися у цей ліміт.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="results-table-wrapper">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Прийом їжі</th>
+                                <th>Ккал</th>
+                                <th style="color: #3b82f6;">Білки</th>
+                                <th style="color: #f59e0b;">Жири</th>
+                                <th style="color: #10b981;">Вуглеводи</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            let accKcal = 0, accP = 0, accF = 0, accC = 0;
+
+            meals.forEach((m, idx) => {
+                html += `
+                    <tr>
+                        <td>П${m.id} <span style="font-size:0.8em; color:var(--text-muted); font-weight:normal">(${m.percent}%)</span></td>
+                        <td>${m.kcal.toFixed(0)}</td>
+                        <td>${m.p.toFixed(0)}</td>
+                        <td>${m.f.toFixed(0)}</td>
+                        <td>${m.c.toFixed(0)}</td>
+                    </tr>
+                `;
+                
+                accKcal += m.kcal; accP += m.p; accF += m.f; accC += m.c;
+
+                // Accumulation row
+                if (idx > 0 && idx < meals.length - 1) {
+                    html += `
+                        <tr class="row-summary">
+                            <td>∑ (П1-П${m.id})</td>
+                            <td>${accKcal.toFixed(0)}</td>
+                            <td>${accP.toFixed(0)}</td>
+                            <td>${accF.toFixed(0)}</td>
+                            <td>${accC.toFixed(0)}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            html += `
+                        <tr class="row-total">
+                            <td>Всього за день</td>
+                            <td>${tdee.toFixed(0)}</td>
+                            <td>${pGrams.toFixed(0)}</td>
+                            <td>${fGrams.toFixed(0)}</td>
+                            <td>${cGrams.toFixed(0)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            `;
+
+            document.getElementById('results').innerHTML = html;
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
